@@ -1,6 +1,6 @@
 # Student Marketplace
 
-Cross-platform student marketplace app planned for Android and iOS.
+Cross-platform student marketplace app for Android and iOS, built with Flutter.
 
 ## Product Direction
 
@@ -18,3 +18,15 @@ Cross-platform student marketplace app planned for Android and iOS.
 - Cloud Firestore
 - Firebase Storage
 - Firebase Cloud Messaging
+
+## Current Prototype
+
+The app currently has an in-memory marketplace flow:
+
+- Campus onboarding
+- Browse with search and category filtering
+- Create listing
+- Listing detail
+- Owner actions: mark sold and delete
+- My Listings
+- Profile and sign out

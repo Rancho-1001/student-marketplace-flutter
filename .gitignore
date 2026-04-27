@@ -17,5 +17,5 @@ local.properties
 # macOS
 .DS_Store
 
-# Firebase generated local files
-firebase_options.dart
+# Firebase local cache
+.firebase/
