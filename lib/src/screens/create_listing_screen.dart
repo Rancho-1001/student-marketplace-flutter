@@ -57,11 +57,45 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         child: Form(
           key: formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
             children: [
+              Card(
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          Icons.add_a_photo_outlined,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Text(
+                          'Photo upload will be connected when Firebase Storage is added.',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  prefixIcon: Icon(Icons.sell_outlined),
+                ),
                 textInputAction: TextInputAction.next,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -73,7 +107,11 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  alignLabelWithHint: true,
+                  prefixIcon: Icon(Icons.notes_outlined),
+                ),
                 minLines: 4,
                 maxLines: 6,
                 validator: (value) {
@@ -88,6 +126,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 controller: priceController,
                 decoration: const InputDecoration(
                   labelText: 'Price',
+                  prefixIcon: Icon(Icons.attach_money),
                   prefixText: r'$',
                 ),
                 keyboardType: const TextInputType.numberWithOptions(
@@ -105,7 +144,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               DropdownButtonFormField<String>(
                 initialValue: category,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Category'),
+                decoration: const InputDecoration(
+                  labelText: 'Category',
+                  prefixIcon: Icon(Icons.category_outlined),
+                ),
                 items: categories
                     .map(
                       (item) => DropdownMenuItem(
@@ -121,11 +163,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.school_outlined),
-                title: const Text('Campus'),
-                subtitle: Text(widget.campus),
+              Card(
+                color: Colors.white,
+                child: ListTile(
+                  leading: const Icon(Icons.school_outlined),
+                  title: const Text('Campus'),
+                  subtitle: Text(widget.campus),
+                ),
               ),
               const SizedBox(height: 24),
               FilledButton.icon(

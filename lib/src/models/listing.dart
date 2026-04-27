@@ -91,6 +91,19 @@ class MarketplaceStore extends ChangeNotifier {
         createdAt: DateTime.now().subtract(const Duration(days: 2)),
         distanceMiles: 52,
       ),
+      Listing(
+        id: '4',
+        title: 'Move-out cleaning',
+        description:
+            'Two students available for apartment cleaning before lease turnover.',
+        price: 90,
+        category: 'Services',
+        campus: 'Michigan State University',
+        sellerName: 'Chris',
+        sellerId: 'seller-4',
+        createdAt: DateTime.now().subtract(const Duration(days: 3)),
+        distanceMiles: 2.1,
+      ),
     ]);
   }
 
@@ -98,6 +111,16 @@ class MarketplaceStore extends ChangeNotifier {
   final List<Listing> _listings;
 
   List<Listing> get listings => List.unmodifiable(_listings);
+
+  int activeCountForCampus(String campus) {
+    return _listings
+        .where(
+          (listing) =>
+              listing.campus == campus &&
+              listing.status == ListingStatus.active,
+        )
+        .length;
+  }
 
   List<Listing> activeListings({
     required String campus,

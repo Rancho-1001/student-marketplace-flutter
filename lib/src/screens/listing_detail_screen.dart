@@ -16,6 +16,8 @@ class ListingDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Listing')),
       body: AnimatedBuilder(
@@ -25,15 +27,35 @@ class ListingDetailScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             children: [
               Container(
-                height: 220,
+                height: 240,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(8),
+                  color: colorScheme.primary,
+                  borderRadius: BorderRadius.circular(18),
                 ),
-                child: Icon(
-                  Icons.photo_camera_outlined,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: -20,
+                      bottom: -26,
+                      child: Icon(
+                        Icons.shopping_bag_outlined,
+                        size: 150,
+                        color: Colors.white.withValues(alpha: 0.12),
+                      ),
+                    ),
+                    Center(
+                      child: Icon(
+                        Icons.photo_camera_outlined,
+                        size: 68,
+                        color: Colors.white.withValues(alpha: 0.92),
+                      ),
+                    ),
+                    Positioned(
+                      left: 16,
+                      bottom: 16,
+                      child: _DetailPill(label: listing.category),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 20),
@@ -49,7 +71,8 @@ class ListingDetailScreen extends StatelessWidget {
                   Text(
                     '\$${listing.price.toStringAsFixed(0)}',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ],
@@ -59,27 +82,53 @@ class ListingDetailScreen extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  Chip(label: Text(listing.category)),
-                  Chip(label: Text(listing.campus)),
+                  Chip(
+                    avatar: const Icon(Icons.school_outlined, size: 16),
+                    label: Text(listing.campus),
+                  ),
+                  if (listing.distanceMiles != null)
+                    Chip(
+                      avatar: const Icon(Icons.place_outlined, size: 16),
+                      label: Text(
+                        '${listing.distanceMiles!.toStringAsFixed(1)} miles away',
+                      ),
+                    ),
                   if (listing.isSold) const Chip(label: Text('Sold')),
                 ],
               ),
               const SizedBox(height: 20),
-              Text(
-                'Description',
-                style: Theme.of(context).textTheme.titleMedium,
+              Card(
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Description',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(listing.description),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(listing.description),
-              const SizedBox(height: 20),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.person_outline),
-                title: Text(listing.sellerName),
-                subtitle: Text(
-                  listing.distanceMiles == null
-                      ? 'Campus seller'
-                      : '${listing.distanceMiles!.toStringAsFixed(1)} miles away',
+              const SizedBox(height: 12),
+              Card(
+                color: Colors.white,
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: colorScheme.secondaryContainer,
+                    child: Text(listing.sellerName.characters.first),
+                  ),
+                  title: Text(listing.sellerName),
+                  subtitle: Text(
+                    listing.distanceMiles == null
+                        ? 'Campus seller'
+                        : '${listing.distanceMiles!.toStringAsFixed(1)} miles away',
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -121,6 +170,24 @@ class ListingDetailScreen extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _DetailPill extends StatelessWidget {
+  const _DetailPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
     );
   }
 }
