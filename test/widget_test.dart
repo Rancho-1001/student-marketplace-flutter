@@ -6,8 +6,11 @@ void main() {
     await tester.pumpWidget(const StudentMarketplaceApp());
 
     expect(find.text('Student Marketplace'), findsOneWidget);
-    expect(find.text('Display name'), findsOneWidget);
+    expect(find.text('Create your account'), findsOneWidget);
+    expect(find.text('Username'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
     expect(find.text('Campus'), findsOneWidget);
-    expect(find.text('Continue'), findsOneWidget);
+    expect(find.text('Create Account'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
   });
 }
