@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 
 import '../models/listing.dart';
+import '../services/auth_service.dart';
 
 enum AuthMode { createAccount, signIn }
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key, required this.onContinue});
+  const AuthScreen({
+    super.key,
+    required this.authService,
+    required this.onAuthenticated,
+  });
 
-  final void Function(String name, String campus) onContinue;
+  final AuthService authService;
+  final void Function(AuthSession session) onAuthenticated;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -22,6 +28,7 @@ class _AuthScreenState extends State<AuthScreen> {
   String campus = campuses.first;
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
+  bool isSubmitting = false;
 
   bool get isCreateAccount => mode == AuthMode.createAccount;
 
@@ -33,14 +40,42 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
-  void submit() {
+  Future<void> submit() async {
     if (formKey.currentState?.validate() ?? false) {
-      widget.onContinue(usernameController.text.trim(), campus);
+      setState(() => isSubmitting = true);
+      try {
+        final username = usernameController.text.trim();
+        final password = passwordController.text;
+        final session = isCreateAccount
+            ? await widget.authService.createAccount(
+                username: username,
+                password: password,
+                campus: campus,
+              )
+            : await widget.authService.signIn(
+                username: username,
+                password: password,
+                campus: campus,
+              );
+        widget.onAuthenticated(session);
+      } finally {
+        if (mounted) {
+          setState(() => isSubmitting = false);
+        }
+      }
     }
   }
 
-  void continueWithGoogle() {
-    widget.onContinue('Google Student', campus);
+  Future<void> continueWithGoogle() async {
+    setState(() => isSubmitting = true);
+    try {
+      final session = await widget.authService.signInWithGoogle(campus: campus);
+      widget.onAuthenticated(session);
+    } finally {
+      if (mounted) {
+        setState(() => isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -99,6 +134,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 ),
                               ],
                               selected: {mode},
+                              showSelectedIcon: false,
                               onSelectionChanged: (selection) {
                                 setState(() {
                                   mode = selection.first;
@@ -195,7 +231,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                             const SizedBox(height: 18),
                             FilledButton.icon(
-                              onPressed: submit,
+                              onPressed: isSubmitting ? null : submit,
                               icon: Icon(
                                 isCreateAccount
                                     ? Icons.person_add_alt_1
@@ -209,7 +245,9 @@ class _AuthScreenState extends State<AuthScreen> {
                             const _DividerLabel(label: 'or'),
                             const SizedBox(height: 14),
                             OutlinedButton.icon(
-                              onPressed: continueWithGoogle,
+                              onPressed: isSubmitting
+                                  ? null
+                                  : continueWithGoogle,
                               icon: const Icon(Icons.g_mobiledata, size: 30),
                               label: const Text('Continue with Google'),
                             ),

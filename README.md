@@ -30,3 +30,7 @@ The app currently has an in-memory marketplace flow:
 - Owner actions: mark sold and delete
 - My Listings
 - Profile and sign out
+
+## Firebase Status
+
+Firebase packages are installed and the app has an auth service boundary. See [docs/firebase_setup.md](docs/firebase_setup.md) for the remaining Firebase project configuration steps.

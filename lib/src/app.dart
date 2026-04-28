@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'models/listing.dart';
 import 'screens/auth_screen.dart';
 import 'screens/marketplace_shell.dart';
+import 'services/auth_service.dart';
 
 class StudentMarketplaceApp extends StatefulWidget {
   const StudentMarketplaceApp({super.key});
@@ -13,15 +14,16 @@ class StudentMarketplaceApp extends StatefulWidget {
 
 class _StudentMarketplaceAppState extends State<StudentMarketplaceApp> {
   final MarketplaceStore store = MarketplaceStore.seeded();
+  final AuthService authService = PrototypeAuthService();
   String? userName;
   String? userCampus;
 
   bool get isSignedIn => userName != null && userCampus != null;
 
-  void signIn(String name, String campus) {
+  void applySession(AuthSession session) {
     setState(() {
-      userName = name;
-      userCampus = campus;
+      userName = session.displayName;
+      userCampus = session.campus;
     });
   }
 
@@ -97,7 +99,7 @@ class _StudentMarketplaceAppState extends State<StudentMarketplaceApp> {
               userCampus: userCampus!,
               onSignOut: signOut,
             )
-          : AuthScreen(onContinue: signIn),
+          : AuthScreen(authService: authService, onAuthenticated: applySession),
     );
   }
 }
