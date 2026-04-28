@@ -1,9 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:student_marketplace/src/app.dart';
+import 'package:student_marketplace/src/services/auth_service.dart';
 
 void main() {
   testWidgets('shows marketplace onboarding', (tester) async {
-    await tester.pumpWidget(const StudentMarketplaceApp());
+    await tester.pumpWidget(
+      StudentMarketplaceApp(authService: PrototypeAuthService()),
+    );
 
     expect(find.text('Student Marketplace'), findsOneWidget);
     expect(find.text('Create your account'), findsOneWidget);

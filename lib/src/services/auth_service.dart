@@ -26,6 +26,8 @@ abstract class AuthService {
   });
 
   Future<AuthSession> signInWithGoogle({required String campus});
+
+  Future<void> signOut();
 }
 
 class PrototypeAuthService implements AuthService {
@@ -63,4 +65,7 @@ class PrototypeAuthService implements AuthService {
       provider: AuthProvider.google,
     );
   }
+
+  @override
+  Future<void> signOut() async {}
 }

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "770368582809",
+    "project_id": "login-createaccount-firebase",
+    "storage_bucket": "login-createaccount-firebase.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:770368582809:android:49794a7a9f98a62fab3408",
+        "android_client_info": {
+          "package_name": "com.rancho.student_marketplace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClVGxFtKhbU7k3Zr74fCltcT3X9MmszzU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:770368582809:android:05fa5a5781d02c93ab3408",
+        "android_client_info": {
+          "package_name": "user.account"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClVGxFtKhbU7k3Zr74fCltcT3X9MmszzU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

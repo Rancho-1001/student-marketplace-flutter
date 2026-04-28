@@ -58,6 +58,8 @@ class _AuthScreenState extends State<AuthScreen> {
                 campus: campus,
               );
         widget.onAuthenticated(session);
+      } catch (error) {
+        showAuthError(error);
       } finally {
         if (mounted) {
           setState(() => isSubmitting = false);
@@ -71,11 +73,39 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       final session = await widget.authService.signInWithGoogle(campus: campus);
       widget.onAuthenticated(session);
+    } catch (error) {
+      showAuthError(error);
     } finally {
       if (mounted) {
         setState(() => isSubmitting = false);
       }
     }
+  }
+
+  void showAuthError(Object error) {
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(authErrorMessage(error))));
+  }
+
+  String authErrorMessage(Object error) {
+    final message = error.toString();
+    if (message.contains('email-already-in-use')) {
+      return 'That username is already taken.';
+    }
+    if (message.contains('user-not-found') ||
+        message.contains('wrong-password') ||
+        message.contains('invalid-credential')) {
+      return 'Username or password is incorrect.';
+    }
+    if (message.contains('popup-closed-by-user') ||
+        message.contains('canceled')) {
+      return 'Sign in was canceled.';
+    }
+    return 'Authentication failed. Please try again.';
   }
 
   @override

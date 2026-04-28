@@ -4,9 +4,12 @@ import 'models/listing.dart';
 import 'screens/auth_screen.dart';
 import 'screens/marketplace_shell.dart';
 import 'services/auth_service.dart';
+import 'services/firebase_auth_service.dart';
 
 class StudentMarketplaceApp extends StatefulWidget {
-  const StudentMarketplaceApp({super.key});
+  const StudentMarketplaceApp({super.key, this.authService});
+
+  final AuthService? authService;
 
   @override
   State<StudentMarketplaceApp> createState() => _StudentMarketplaceAppState();
@@ -14,7 +17,8 @@ class StudentMarketplaceApp extends StatefulWidget {
 
 class _StudentMarketplaceAppState extends State<StudentMarketplaceApp> {
   final MarketplaceStore store = MarketplaceStore.seeded();
-  final AuthService authService = PrototypeAuthService();
+  late final AuthService authService =
+      widget.authService ?? FirebaseMarketplaceAuthService();
   String? userName;
   String? userCampus;
 
@@ -27,7 +31,8 @@ class _StudentMarketplaceAppState extends State<StudentMarketplaceApp> {
     });
   }
 
-  void signOut() {
+  Future<void> signOut() async {
+    await authService.signOut();
     setState(() {
       userName = null;
       userCampus = null;

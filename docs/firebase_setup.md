@@ -1,6 +1,6 @@
 # Firebase Setup
 
-The Firebase packages and CLI tooling are installed, but the project still needs a real Firebase configuration.
+The Firebase packages and CLI tooling are installed. FlutterFire is configured for Android, iOS, and Web against Firebase project `login-createaccount-firebase`.
 
 ## Login
 
@@ -18,14 +18,14 @@ firebase login:list
 
 ## Configure FlutterFire
 
-After login, run from the repo root:
+FlutterFire has already been run with:
 
 ```bash
 cd /Users/rancho/Desktop/PersonalProjects/student-marketplace-flutter
-/Users/rancho/.pub-cache/bin/flutterfire configure
+/Users/rancho/.pub-cache/bin/flutterfire configure \
+  --project=login-createaccount-firebase \
+  --platforms=android,ios,web
 ```
-
-Select or create the Firebase project, then include Android, iOS, and Web.
 
 ## Firebase Products Needed
 
@@ -35,8 +35,10 @@ Select or create the Firebase project, then include Android, iOS, and Web.
 - Cloud Firestore
 - Firebase Storage
 
+These still need to be enabled in the Firebase Console before real auth/listing storage will work.
+
 ## Current Auth Direction
 
 Firebase Auth supports email/password natively, not username/password. For the prototype username flow, the app maps a username to an internal email format and stores the public username in Firestore.
 
-Google sign-in is represented in the UI now. It will be wired after FlutterFire generates platform config files.
+Google sign-in is wired through Firebase Auth. On Web it uses Firebase's Google popup provider; on mobile it uses the Google Sign-In plugin and Firebase credentials.
