@@ -29,11 +29,22 @@ class ListingCard extends StatelessWidget {
                   color: categoryColor(listing.category, colorScheme),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  categoryIcon(listing.category),
-                  color: Colors.white,
-                  size: 34,
-                ),
+                clipBehavior: Clip.antiAlias,
+                child: listing.imageUrl == null || listing.imageUrl!.isEmpty
+                    ? Icon(
+                        categoryIcon(listing.category),
+                        color: Colors.white,
+                        size: 34,
+                      )
+                    : Image.network(
+                        listing.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Icon(
+                          categoryIcon(listing.category),
+                          color: Colors.white,
+                          size: 34,
+                        ),
+                      ),
               ),
               const SizedBox(width: 14),
               Expanded(

@@ -35,7 +35,15 @@ cd /Users/rancho/Desktop/PersonalProjects/student-marketplace-flutter
 - Cloud Firestore
 - Firebase Storage
 
-These still need to be enabled in the Firebase Console before real auth/listing storage will work.
+These still need to be enabled in the Firebase Console before real auth/listing storage will work. Storage must be initialized from the console before `firebase deploy --only storage` can publish `storage.rules`.
+
+## Storage Rules
+
+After enabling Storage in the Firebase Console, deploy the rules with:
+
+```bash
+firebase deploy --only storage --project login-createaccount-firebase
+```
 
 ## Current Auth Direction
 

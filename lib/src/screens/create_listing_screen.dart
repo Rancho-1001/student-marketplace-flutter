@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../models/listing.dart';
 
@@ -23,7 +26,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
   final priceController = TextEditingController();
+  final imagePicker = ImagePicker();
   String category = categories.first;
+  Uint8List? selectedImageBytes;
+  String? selectedImageExtension;
   bool isSaving = false;
 
   @override
@@ -48,6 +54,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         category: category,
         campus: widget.campus,
         sellerName: widget.sellerName,
+        imageBytes: selectedImageBytes,
+        imageExtension: selectedImageExtension,
       );
       if (mounted) {
         Navigator.of(context).pop();
@@ -65,6 +73,40 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     }
   }
 
+  Future<void> choosePhoto() async {
+    try {
+      final photo = await imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 78,
+        maxWidth: 1600,
+      );
+      if (photo == null) {
+        return;
+      }
+      final bytes = await photo.readAsBytes();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        selectedImageBytes = bytes;
+        selectedImageExtension = photo.name.split('.').last;
+      });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not select photo: $error')),
+        );
+      }
+    }
+  }
+
+  void clearPhoto() {
+    setState(() {
+      selectedImageBytes = null;
+      selectedImageExtension = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,27 +121,73 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 color: Colors.white,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Container(
-                        width: 54,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(16),
+                      if (selectedImageBytes != null) ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: AspectRatio(
+                            aspectRatio: 16 / 10,
+                            child: Image.memory(
+                              selectedImageBytes!,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
-                        child: Icon(
-                          Icons.add_a_photo_outlined,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onPrimaryContainer,
-                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      Row(
+                        children: [
+                          Container(
+                            width: 54,
+                            height: 54,
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(
+                              Icons.add_a_photo_outlined,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(
+                              selectedImageBytes == null
+                                  ? 'Add a real photo for this listing.'
+                                  : 'Photo selected and ready to upload.',
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 14),
-                      const Expanded(
-                        child: Text(
-                          'Photo upload will be connected when Firebase Storage is added.',
-                        ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: isSaving ? null : choosePhoto,
+                              icon: const Icon(Icons.photo_library_outlined),
+                              label: Text(
+                                selectedImageBytes == null
+                                    ? 'Choose Photo'
+                                    : 'Change Photo',
+                              ),
+                            ),
+                          ),
+                          if (selectedImageBytes != null) ...[
+                            const SizedBox(width: 10),
+                            IconButton.outlined(
+                              tooltip: 'Remove photo',
+                              onPressed: isSaving ? null : clearPhoto,
+                              icon: const Icon(Icons.close),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
 import '../services/auth_service.dart';
@@ -34,6 +35,8 @@ class Listing {
     required this.sellerName,
     required this.sellerId,
     required this.createdAt,
+    this.imageUrl,
+    this.imagePath,
     this.distanceMiles,
     this.status = ListingStatus.active,
   });
@@ -51,6 +54,8 @@ class Listing {
       sellerName: data['sellerName'] as String? ?? 'Student',
       sellerId: data['sellerId'] as String? ?? '',
       createdAt: createdAt is Timestamp ? createdAt.toDate() : DateTime.now(),
+      imageUrl: data['imageUrl'] as String?,
+      imagePath: data['imagePath'] as String?,
       distanceMiles: (data['distanceMiles'] as num?)?.toDouble(),
       status: ListingStatus.values.firstWhere(
         (status) => status.name == data['status'],
@@ -68,6 +73,8 @@ class Listing {
   final String sellerName;
   final String sellerId;
   final DateTime createdAt;
+  final String? imageUrl;
+  final String? imagePath;
   final double? distanceMiles;
   ListingStatus status;
 
@@ -83,6 +90,8 @@ class Listing {
       'sellerName': sellerName,
       'sellerId': sellerId,
       'createdAt': Timestamp.fromDate(createdAt),
+      'imageUrl': imageUrl,
+      'imagePath': imagePath,
       'distanceMiles': distanceMiles,
       'status': status.name,
     };
@@ -90,13 +99,21 @@ class Listing {
 }
 
 class MarketplaceStore extends ChangeNotifier {
-  MarketplaceStore._(this._listings, {FirebaseFirestore? firestore})
-    : _firestore = firestore;
+  MarketplaceStore._(
+    this._listings, {
+    FirebaseFirestore? firestore,
+    FirebaseStorage? storage,
+  }) : _firestore = firestore,
+       _storage = storage;
 
-  factory MarketplaceStore.firestore({FirebaseFirestore? firestore}) {
+  factory MarketplaceStore.firestore({
+    FirebaseFirestore? firestore,
+    FirebaseStorage? storage,
+  }) {
     return MarketplaceStore._(
       [],
       firestore: firestore ?? FirebaseFirestore.instance,
+      storage: storage ?? FirebaseStorage.instance,
     );
   }
 
@@ -157,6 +174,7 @@ class MarketplaceStore extends ChangeNotifier {
   }
 
   final FirebaseFirestore? _firestore;
+  final FirebaseStorage? _storage;
   final List<Listing> _listings;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _subscription;
   String currentUserId = MarketplaceAuthIds.prototypeUserId;
@@ -242,9 +260,19 @@ class MarketplaceStore extends ChangeNotifier {
     required String category,
     required String campus,
     required String sellerName,
+    Uint8List? imageBytes,
+    String? imageExtension,
   }) async {
+    final listingId = DateTime.now().microsecondsSinceEpoch.toString();
+    final uploadedImage = imageBytes == null
+        ? null
+        : await _uploadListingImage(
+            listingId: listingId,
+            imageBytes: imageBytes,
+            imageExtension: imageExtension,
+          );
     final listing = Listing(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      id: listingId,
       title: title,
       description: description,
       price: price,
@@ -253,6 +281,8 @@ class MarketplaceStore extends ChangeNotifier {
       sellerName: sellerName,
       sellerId: currentUserId,
       createdAt: DateTime.now(),
+      imageUrl: uploadedImage?.url,
+      imagePath: uploadedImage?.path,
       distanceMiles: 0.2,
     );
 
@@ -280,7 +310,17 @@ class MarketplaceStore extends ChangeNotifier {
 
   Future<void> deleteListing(String listingId) async {
     if (_firestore != null) {
+      final snapshot = await _firestore
+          .collection('listings')
+          .doc(listingId)
+          .get();
+      final imagePath = snapshot.data()?['imagePath'] as String?;
       await _firestore.collection('listings').doc(listingId).delete();
+      if (imagePath != null && _storage != null) {
+        await _storage.ref(imagePath).delete().catchError((Object error) {
+          debugPrint('Listing image delete skipped: $error');
+        });
+      }
       return;
     }
 
@@ -293,4 +333,38 @@ class MarketplaceStore extends ChangeNotifier {
     _subscription?.cancel();
     super.dispose();
   }
+
+  Future<_UploadedListingImage> _uploadListingImage({
+    required String listingId,
+    required Uint8List imageBytes,
+    String? imageExtension,
+  }) async {
+    final storage = _storage;
+    if (storage == null) {
+      return _UploadedListingImage(url: '', path: '');
+    }
+
+    final extension = _normalizedImageExtension(imageExtension);
+    final path = 'listing-images/$currentUserId/$listingId.$extension';
+    final contentType = extension == 'png' ? 'image/png' : 'image/jpeg';
+    final ref = storage.ref(path);
+    await ref.putData(imageBytes, SettableMetadata(contentType: contentType));
+    final url = await ref.getDownloadURL();
+    return _UploadedListingImage(url: url, path: path);
+  }
+
+  String _normalizedImageExtension(String? imageExtension) {
+    final extension = imageExtension?.toLowerCase().replaceAll('.', '');
+    if (extension == 'png') {
+      return 'png';
+    }
+    return 'jpg';
+  }
+}
+
+class _UploadedListingImage {
+  const _UploadedListingImage({required this.url, required this.path});
+
+  final String url;
+  final String path;
 }

@@ -26,36 +26,62 @@ class ListingDetailScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Container(
-                height: 240,
-                decoration: BoxDecoration(
-                  color: colorScheme.primary,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      right: -20,
-                      bottom: -26,
-                      child: Icon(
-                        Icons.shopping_bag_outlined,
-                        size: 150,
-                        color: Colors.white.withValues(alpha: 0.12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  height: 240,
+                  decoration: BoxDecoration(color: colorScheme.primary),
+                  child: Stack(
+                    children: [
+                      if (listing.imageUrl != null &&
+                          listing.imageUrl!.isNotEmpty)
+                        Positioned.fill(
+                          child: Image.network(
+                            listing.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                          ),
+                        ),
+                      if (listing.imageUrl != null &&
+                          listing.imageUrl!.isNotEmpty)
+                        Positioned.fill(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.black.withValues(alpha: 0.05),
+                                  Colors.black.withValues(alpha: 0.45),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      Positioned(
+                        right: -20,
+                        bottom: -26,
+                        child: Icon(
+                          Icons.shopping_bag_outlined,
+                          size: 150,
+                          color: Colors.white.withValues(alpha: 0.12),
+                        ),
                       ),
-                    ),
-                    Center(
-                      child: Icon(
-                        Icons.photo_camera_outlined,
-                        size: 68,
-                        color: Colors.white.withValues(alpha: 0.92),
+                      if (listing.imageUrl == null || listing.imageUrl!.isEmpty)
+                        Center(
+                          child: Icon(
+                            Icons.photo_camera_outlined,
+                            size: 68,
+                            color: Colors.white.withValues(alpha: 0.92),
+                          ),
+                        ),
+                      Positioned(
+                        left: 16,
+                        bottom: 16,
+                        child: _DetailPill(label: listing.category),
                       ),
-                    ),
-                    Positioned(
-                      left: 16,
-                      bottom: 16,
-                      child: _DetailPill(label: listing.category),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
