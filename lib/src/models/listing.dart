@@ -1,4 +1,9 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+
+import '../services/auth_service.dart';
 
 const campuses = <String>[
   'Michigan State University',
@@ -33,6 +38,27 @@ class Listing {
     this.status = ListingStatus.active,
   });
 
+  factory Listing.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? {};
+    final createdAt = data['createdAt'];
+    return Listing(
+      id: doc.id,
+      title: data['title'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      price: (data['price'] as num?)?.toDouble() ?? 0,
+      category: data['category'] as String? ?? 'Other',
+      campus: data['campus'] as String? ?? '',
+      sellerName: data['sellerName'] as String? ?? 'Student',
+      sellerId: data['sellerId'] as String? ?? '',
+      createdAt: createdAt is Timestamp ? createdAt.toDate() : DateTime.now(),
+      distanceMiles: (data['distanceMiles'] as num?)?.toDouble(),
+      status: ListingStatus.values.firstWhere(
+        (status) => status.name == data['status'],
+        orElse: () => ListingStatus.active,
+      ),
+    );
+  }
+
   final String id;
   final String title;
   final String description;
@@ -46,13 +72,36 @@ class Listing {
   ListingStatus status;
 
   bool get isSold => status == ListingStatus.sold;
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'title': title,
+      'description': description,
+      'price': price,
+      'category': category,
+      'campus': campus,
+      'sellerName': sellerName,
+      'sellerId': sellerId,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'distanceMiles': distanceMiles,
+      'status': status.name,
+    };
+  }
 }
 
 class MarketplaceStore extends ChangeNotifier {
-  MarketplaceStore(this._listings);
+  MarketplaceStore._(this._listings, {FirebaseFirestore? firestore})
+    : _firestore = firestore;
+
+  factory MarketplaceStore.firestore({FirebaseFirestore? firestore}) {
+    return MarketplaceStore._(
+      [],
+      firestore: firestore ?? FirebaseFirestore.instance,
+    );
+  }
 
   factory MarketplaceStore.seeded() {
-    return MarketplaceStore([
+    return MarketplaceStore._([
       Listing(
         id: '1',
         title: 'Mini fridge',
@@ -62,7 +111,7 @@ class MarketplaceStore extends ChangeNotifier {
         category: 'Furniture',
         campus: 'Michigan State University',
         sellerName: 'Alex',
-        sellerId: demoUserId,
+        sellerId: MarketplaceAuthIds.prototypeUserId,
         createdAt: DateTime.now().subtract(const Duration(hours: 2)),
         distanceMiles: 0.8,
       ),
@@ -107,10 +156,47 @@ class MarketplaceStore extends ChangeNotifier {
     ]);
   }
 
-  static const demoUserId = 'current-user';
+  final FirebaseFirestore? _firestore;
   final List<Listing> _listings;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _subscription;
+  String currentUserId = MarketplaceAuthIds.prototypeUserId;
 
+  bool get isFirestoreBacked => _firestore != null;
   List<Listing> get listings => List.unmodifiable(_listings);
+
+  void startListening({required String userId, required String campus}) {
+    currentUserId = userId;
+    if (_firestore == null) {
+      notifyListeners();
+      return;
+    }
+
+    _subscription?.cancel();
+    _subscription = _firestore
+        .collection('listings')
+        .where('campus', isEqualTo: campus)
+        .snapshots()
+        .listen(
+          (snapshot) {
+            _listings
+              ..clear()
+              ..addAll(snapshot.docs.map(Listing.fromFirestore));
+            notifyListeners();
+          },
+          onError: (Object error) {
+            debugPrint('Listing subscription failed: $error');
+          },
+        );
+  }
+
+  Future<void> stopListening() async {
+    await _subscription?.cancel();
+    _subscription = null;
+    if (_firestore != null) {
+      _listings.clear();
+    }
+    notifyListeners();
+  }
 
   int activeCountForCampus(String campus) {
     return _listings
@@ -143,44 +229,68 @@ class MarketplaceStore extends ChangeNotifier {
   }
 
   List<Listing> myListings() {
-    return _listings.where((listing) => listing.sellerId == demoUserId).toList()
+    return _listings
+        .where((listing) => listing.sellerId == currentUserId)
+        .toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
-  void addListing({
+  Future<void> addListing({
     required String title,
     required String description,
     required double price,
     required String category,
     required String campus,
     required String sellerName,
-  }) {
-    _listings.insert(
-      0,
-      Listing(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        title: title,
-        description: description,
-        price: price,
-        category: category,
-        campus: campus,
-        sellerName: sellerName,
-        sellerId: demoUserId,
-        createdAt: DateTime.now(),
-        distanceMiles: 0.2,
-      ),
+  }) async {
+    final listing = Listing(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      title: title,
+      description: description,
+      price: price,
+      category: category,
+      campus: campus,
+      sellerName: sellerName,
+      sellerId: currentUserId,
+      createdAt: DateTime.now(),
+      distanceMiles: 0.2,
     );
+
+    if (_firestore != null) {
+      await _firestore.collection('listings').add(listing.toFirestore());
+      return;
+    }
+
+    _listings.insert(0, listing);
     notifyListeners();
   }
 
-  void markSold(String listingId) {
+  Future<void> markSold(String listingId) async {
+    if (_firestore != null) {
+      await _firestore.collection('listings').doc(listingId).update({
+        'status': ListingStatus.sold.name,
+      });
+      return;
+    }
+
     final listing = _listings.firstWhere((item) => item.id == listingId);
     listing.status = ListingStatus.sold;
     notifyListeners();
   }
 
-  void deleteListing(String listingId) {
+  Future<void> deleteListing(String listingId) async {
+    if (_firestore != null) {
+      await _firestore.collection('listings').doc(listingId).delete();
+      return;
+    }
+
     _listings.removeWhere((listing) => listing.id == listingId);
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }

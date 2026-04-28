@@ -136,8 +136,11 @@ class ListingDetailScreen extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: listing.isSold
                       ? null
-                      : () {
-                          store.markSold(listing.id);
+                      : () async {
+                          await store.markSold(listing.id);
+                          if (!context.mounted) {
+                            return;
+                          }
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Marked as sold')),
                           );
@@ -147,8 +150,11 @@ class ListingDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: () {
-                    store.deleteListing(listing.id);
+                  onPressed: () async {
+                    await store.deleteListing(listing.id);
+                    if (!context.mounted) {
+                      return;
+                    }
                     Navigator.of(context).pop();
                   },
                   icon: const Icon(Icons.delete_outline),

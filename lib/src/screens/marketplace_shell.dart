@@ -9,12 +9,14 @@ class MarketplaceShell extends StatefulWidget {
   const MarketplaceShell({
     super.key,
     required this.store,
+    required this.userId,
     required this.userName,
     required this.userCampus,
     required this.onSignOut,
   });
 
   final MarketplaceStore store;
+  final String userId;
   final String userName;
   final String userCampus;
   final VoidCallback onSignOut;
@@ -85,7 +87,7 @@ class _MarketplaceShellState extends State<MarketplaceShell> {
         builder: (_) => ListingDetailScreen(
           store: widget.store,
           listing: listing,
-          isOwner: listing.sellerId == MarketplaceStore.demoUserId,
+          isOwner: listing.sellerId == widget.userId,
         ),
       ),
     );

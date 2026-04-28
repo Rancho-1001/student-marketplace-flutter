@@ -24,6 +24,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final descriptionController = TextEditingController();
   final priceController = TextEditingController();
   String category = categories.first;
+  bool isSaving = false;
 
   @override
   void dispose() {
@@ -33,20 +34,35 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     super.dispose();
   }
 
-  void save() {
+  Future<void> save() async {
     if (!(formKey.currentState?.validate() ?? false)) {
       return;
     }
 
-    widget.store.addListing(
-      title: titleController.text.trim(),
-      description: descriptionController.text.trim(),
-      price: double.parse(priceController.text.trim()),
-      category: category,
-      campus: widget.campus,
-      sellerName: widget.sellerName,
-    );
-    Navigator.of(context).pop();
+    setState(() => isSaving = true);
+    try {
+      await widget.store.addListing(
+        title: titleController.text.trim(),
+        description: descriptionController.text.trim(),
+        price: double.parse(priceController.text.trim()),
+        category: category,
+        campus: widget.campus,
+        sellerName: widget.sellerName,
+      );
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not create listing: $error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isSaving = false);
+      }
+    }
   }
 
   @override
@@ -173,7 +189,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
-                onPressed: save,
+                onPressed: isSaving ? null : save,
                 icon: const Icon(Icons.check),
                 label: const Text('Create Listing'),
               ),

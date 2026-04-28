@@ -7,25 +7,31 @@ import 'services/auth_service.dart';
 import 'services/firebase_auth_service.dart';
 
 class StudentMarketplaceApp extends StatefulWidget {
-  const StudentMarketplaceApp({super.key, this.authService});
+  const StudentMarketplaceApp({super.key, this.authService, this.store});
 
   final AuthService? authService;
+  final MarketplaceStore? store;
 
   @override
   State<StudentMarketplaceApp> createState() => _StudentMarketplaceAppState();
 }
 
 class _StudentMarketplaceAppState extends State<StudentMarketplaceApp> {
-  final MarketplaceStore store = MarketplaceStore.seeded();
+  late final MarketplaceStore store =
+      widget.store ?? MarketplaceStore.firestore();
   late final AuthService authService =
       widget.authService ?? FirebaseMarketplaceAuthService();
+  String? userId;
   String? userName;
   String? userCampus;
 
-  bool get isSignedIn => userName != null && userCampus != null;
+  bool get isSignedIn =>
+      userId != null && userName != null && userCampus != null;
 
   void applySession(AuthSession session) {
+    store.startListening(userId: session.userId, campus: session.campus);
     setState(() {
+      userId = session.userId;
       userName = session.displayName;
       userCampus = session.campus;
     });
@@ -33,7 +39,9 @@ class _StudentMarketplaceAppState extends State<StudentMarketplaceApp> {
 
   Future<void> signOut() async {
     await authService.signOut();
+    await store.stopListening();
     setState(() {
+      userId = null;
       userName = null;
       userCampus = null;
     });
@@ -100,6 +108,7 @@ class _StudentMarketplaceAppState extends State<StudentMarketplaceApp> {
       home: isSignedIn
           ? MarketplaceShell(
               store: store,
+              userId: userId!,
               userName: userName!,
               userCampus: userCampus!,
               onSignOut: signOut,

@@ -47,6 +47,7 @@ class FirebaseMarketplaceAuthService implements AuthService {
     );
 
     return AuthSession(
+      userId: user.uid,
       displayName: normalizedUsername,
       campus: campus,
       provider: AuthProvider.password,
@@ -73,6 +74,7 @@ class FirebaseMarketplaceAuthService implements AuthService {
     final savedCampus = await _loadSavedCampus(user.uid);
 
     return AuthSession(
+      userId: user.uid,
       displayName: normalizedUsername,
       campus: savedCampus ?? campus,
       provider: AuthProvider.password,
@@ -111,6 +113,7 @@ class FirebaseMarketplaceAuthService implements AuthService {
     );
 
     return AuthSession(
+      userId: user.uid,
       displayName: username,
       campus: campus,
       provider: AuthProvider.google,
