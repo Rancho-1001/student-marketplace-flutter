@@ -39,7 +39,7 @@ class FirebaseMarketplaceAuthService implements AuthService {
     }
 
     await user.updateDisplayName(normalizedUsername);
-    await _saveUserProfile(
+    await _trySaveUserProfile(
       userId: user.uid,
       username: normalizedUsername,
       campus: campus,
@@ -70,8 +70,7 @@ class FirebaseMarketplaceAuthService implements AuthService {
       throw StateError('Firebase did not return a user.');
     }
 
-    final profile = await _firestore.collection('users').doc(user.uid).get();
-    final savedCampus = profile.data()?['campus'] as String?;
+    final savedCampus = await _loadSavedCampus(user.uid);
 
     return AuthSession(
       displayName: normalizedUsername,
@@ -104,7 +103,7 @@ class FirebaseMarketplaceAuthService implements AuthService {
     }
 
     final username = _googleDisplayName(user);
-    await _saveUserProfile(
+    await _trySaveUserProfile(
       userId: user.uid,
       username: username,
       campus: campus,
@@ -141,6 +140,34 @@ class FirebaseMarketplaceAuthService implements AuthService {
       'updatedAt': FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  Future<void> _trySaveUserProfile({
+    required String userId,
+    required String username,
+    required String campus,
+    required AuthProvider provider,
+  }) async {
+    try {
+      await _saveUserProfile(
+        userId: userId,
+        username: username,
+        campus: campus,
+        provider: provider,
+      );
+    } on FirebaseException catch (error) {
+      debugPrint('Profile save skipped: ${error.code} ${error.message}');
+    }
+  }
+
+  Future<String?> _loadSavedCampus(String userId) async {
+    try {
+      final profile = await _firestore.collection('users').doc(userId).get();
+      return profile.data()?['campus'] as String?;
+    } on FirebaseException catch (error) {
+      debugPrint('Profile load skipped: ${error.code} ${error.message}');
+      return null;
+    }
   }
 
   String _normalizeUsername(String username) {

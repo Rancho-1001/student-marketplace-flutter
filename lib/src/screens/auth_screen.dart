@@ -96,6 +96,18 @@ class _AuthScreenState extends State<AuthScreen> {
     if (message.contains('email-already-in-use')) {
       return 'That username is already taken.';
     }
+    if (message.contains('operation-not-allowed')) {
+      return 'This sign-in method is disabled in Firebase Console.';
+    }
+    if (message.contains('permission-denied')) {
+      return 'Firebase blocked profile access. Check Firestore rules.';
+    }
+    if (message.contains('not-found') && message.contains('Firestore')) {
+      return 'Firestore is not created yet in Firebase Console.';
+    }
+    if (message.contains('network-request-failed')) {
+      return 'Network error. Check your connection and try again.';
+    }
     if (message.contains('user-not-found') ||
         message.contains('wrong-password') ||
         message.contains('invalid-credential')) {
@@ -288,7 +300,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Prototype note: these controls are local for now. Firebase Auth will handle real accounts next.',
+                    'Firebase Auth is connected. Enable Email/Password, Google, and Firestore in Firebase Console before testing.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.black.withValues(alpha: 0.58),
